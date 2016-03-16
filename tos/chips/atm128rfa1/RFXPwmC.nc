@@ -1,8 +1,13 @@
-generic configuration RFXPwmC(uint16_t* tccrxa, uint16_t* tccrxb, uint16_t* tccrxc,
-                              uint16_t* ocrxa, uint16_t* ocrxb, uint16_t* ocrxc,
-                              uint8_t* timskx, uint8_t* tifrx) {
+generic configuration RFXPwmC() {
 	provides {
 		interface GeneralPWM;
+	}
+	uses {
+		interface GeneralIO as PinA;
+		interface GeneralIO as PinB;
+		interface GeneralIO as PinC;
+		interface HplAtmegaCounter<uint16_t> as Counter;
+		interface HplAtmegaCompare<uint16_t> as Compare[uint8_t channel];
 	}
 }
 implementation {

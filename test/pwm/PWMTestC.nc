@@ -15,7 +15,16 @@ implementation {
 	components new TimerMilliC();
 	PWMTestP.Timer -> TimerMilliC;
 
-	components new RFXPwmC(&TCCR3A, &TCCR3B, &TCCR3C, &OCR3A, &OCR3B, &OCR3C, &TIMSK3, &TIFR3) as Timer3Pwm;
+	components new RFXPwmC() as Timer3Pwm;
 	PWMTestP.GeneralPWM -> Timer3Pwm;
+
+	components AtmegaGeneralIOC;
+	Timer3Pwm.PinA -> AtmegaGeneralIOC.PortE3;
+	Timer3Pwm.PinB -> AtmegaGeneralIOC.PortE4;
+	Timer3Pwm.PinC -> AtmegaGeneralIOC.PortE5;
+
+	components HplAtmRfa1Timer3C as PWMTimer;
+	Timer3Pwm.Counter -> PWMTimer.Counter;
+	Timer3Pwm.Compare -> PWMTimer.Compare;
 
 }
