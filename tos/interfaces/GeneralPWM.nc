@@ -22,22 +22,11 @@ interface GeneralPWM {
 	async command uint8_t getMode();
 
 	/**
-	 * @param period Number of ticks before counter reset,
-	 *               may not be applicable in all modes (returns EINVAL).
-	 */
-	async command error_t setPeriod(uint16_t period);
-
-	/**
-	 * Number of ticks befor counter reset.
-	 */
-	async command uint16_t getPeriod();
-
-	/**
 	 * @param channel Channel number.
-	 * @param match Output compare match value for the channel. Duty cycle is 100 * (match / period).
+	 * @param duty_cycle PWM duty cycle, 0-100.
 	 * @param invert Invert PWM output.
 	 */
-	async command error_t start(uint8_t channel, uint16_t match, bool invert);
+	async command error_t start(uint8_t channel, uint8_t duty_cycle, bool invert);
 
 	/**
 	 * @param channel Channel number.

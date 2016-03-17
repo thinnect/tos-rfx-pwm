@@ -8,10 +8,6 @@ module PWMTestP {
 }
 implementation {
 
-	enum {
-		PWM_TOP = 0x1FF,
-	}
-
 	event void Boot.booted() {
 		call Timer.startOneShot(1000UL);
 	}
@@ -20,15 +16,12 @@ implementation {
 		// 1kHz, PWM fast mode
 		call GeneralPWM.configure(1000, PWM_MODE_FAST);
 
-		// Count up to PWM_TOP
-		call GeneralPWM.setPeriod(PMW_TOP);
-
 		// 33% dutycycle on channel A
-		call GeneralPWM.start(0, PWM_TOP*33/100, FALSE);
+		call GeneralPWM.start(0, 33, FALSE);
 		// 66% dutycycle on channel B
-		call GeneralPWM.start(1, PWM_TOP*66/100, FALSE);
+		call GeneralPWM.start(1, 66, FALSE);
 		// 66% inverted dutycycle on channel C
-		call GeneralPWM.start(2, PWM_TOP*66/100, TRUE);
+		call GeneralPWM.start(2, 66, TRUE);
 		//    _        _        _
 		// A | |______| |______| |______
 		//    ____     ____     ____
