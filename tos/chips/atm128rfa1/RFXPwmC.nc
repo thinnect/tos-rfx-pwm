@@ -2,16 +2,18 @@ generic configuration RFXPwmC() {
 	provides {
 		interface GeneralPWM;
 	}
-	uses {
-		interface GeneralIO as PinA;
-		interface GeneralIO as PinB;
-		interface GeneralIO as PinC;
-		interface HplAtmegaCounter<uint16_t> as Counter;
-		interface HplAtmegaCompare<uint16_t> as Compare[uint8_t channel];
-	}
 }
 implementation {
 
 	// TODO implementation
+	components RFXPwmC as Module;
 
+	components AtmegaGeneralIOC;
+    Module.PinA -> AtmegaGeneralIOC.PortE3; //Hard-coded Port E, Pin 3
+    Module.PinB -> AtmegaGeneralIOC.PortE4; //Hard-coded Port E, Pin 4
+    Module.PinC -> AtmegaGeneralIOC.PortE5; //Hard-coded Port E, Pin 5
+
+    components HplAtmRfa1Timer3C as PWMTimer;
+    Module.Counter -> PWMTimer.Counter;
+    Module.Compare -> PWMTimer.Compare[0]; //Hard-coded channel A
 }
