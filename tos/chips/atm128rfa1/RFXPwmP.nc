@@ -1,6 +1,7 @@
 #include "RFXPwm.h"
+#include "generalpwm.h"
 
-generic module RFXPwmP() @safe{
+generic module RFXPwmP() {
 	
 
 	provides {
@@ -8,8 +9,8 @@ generic module RFXPwmP() @safe{
 	}
 	uses {
 		interface GeneralIO as PinA;
-		//interface GeneralIO as PinB;
-		//interface GeneralIO as PinC;
+		interface GeneralIO as PinB;
+		interface GeneralIO as PinC;
 		interface HplAtmegaCounter<uint16_t> as Counter;
 		//interface HplAtmegaCompare<uint16_t> as Compare[uint8_t channel];
 		interface HplAtmegaCompare<uint16_t> as Compare;
@@ -22,7 +23,7 @@ implementation {
 
 	//const sClockDivider_t rgsClockDividers[]={{(uint16_t)1,(uint8_t)1,},{(uint16_t)1,(uint8_t)1,}}
 	const uint16_t m_rgwClockDividers[]={1,8,64,256,1024};
-	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(rgwClockDividers)/sizeof(uint16_t));
+	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
 
 	uint8_t 	m_bClkDivNdx=0xFF;
 	uint16_t 	m_wCntrTop=0;
@@ -42,7 +43,7 @@ implementation {
 			{
 				//bRet=i;
 				m_bClkDivNdx=i;
-				fRes=TRUE
+				fRes=TRUE;
 				break;
 			}
 		}
@@ -131,7 +132,7 @@ implementation {
 		return m_bMode;
 	}
 
-	async command error_t start(uint8_t channel, uint8_t duty_cycle, bool invert)
+	async command error_t GeneralPWM.start(uint8_t channel, uint8_t duty_cycle, bool invert)
 	{//TODO: Check - is channel for channel (A/B/C) or timer number selection? Implement as A/B/C until resolved.
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
 
@@ -172,40 +173,45 @@ implementation {
 		return ret;
 	}
 
-	async command error_t start(uint8_t channel, uint8_t duty_cycle, bool invert)
-	async command error_t stop(uint8_t channel)
+
+    async event void Counter.overflow() { }
+
+    async event void Compare.fired() { }
+
+	async command error_t GeneralPWM.stop(uint8_t channel)
 	{
 		error_t ret = SUCCESS;
 
 		if(0x00 == channel)
-			{
-				call PinA.makeInput();
-				call PinA.set();
-				OC3A = 0;
-			}
-			else if(0x01 == channel)
-			{
-				call PinB.makeInput();
-				call PinB.set();
-				OC3B = 0;
-			}
-			else if(0x02 == channel)
-			{
-				call PinC.makeInput();
-				call PinC.set();
-				OC3C = 0;
-			}
-			else
-			{
-				ret = FAIL;
-			}
+		{
+			call PinA.makeInput();
+			call PinA.set();
+			call Compare.setMode(0);
 		}
+		else if(0x01 == channel)
+		{
+			call PinB.makeInput();
+			call PinB.set();
+			call Compare.setMode(0);
+		}
+		else if(0x02 == channel)
+		{
+			call PinC.makeInput();
+			call PinC.set();
+			call Compare.setMode(0);
+		}
+		else
+		{
+			ret = FAIL;
+		}
+		
 
-		if(SUCCESS == ret && 0 == call PinA.isInput() && 0 == call PinB.isInput() && 0 == PinC.isInput())
+		if(SUCCESS == ret && 0 == call PinA.isInput() && 0 == call PinB.isInput() && 0 == call PinC.isInput())
 		{
 			call Compare.setMode(0);
 			call Counter.setMode(0);
 		}
 	}
+
 
 }

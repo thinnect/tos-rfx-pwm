@@ -1,4 +1,5 @@
 #include "generalpwm.h"
+//#include <GeneralPWM.h>
 module PWMTestP {
 	uses {
 		interface Timer<TMilli>;

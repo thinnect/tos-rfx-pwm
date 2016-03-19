@@ -6,7 +6,7 @@ generic configuration RFXPwmC() {
 implementation {
 
 	// TODO implementation
-	components RFXPwmC as Module;
+	components new RFXPwmP() as Module;
 
 	components AtmegaGeneralIOC;
     Module.PinA -> AtmegaGeneralIOC.PortE3; //Hard-coded Port E, Pin 3
