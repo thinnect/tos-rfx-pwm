@@ -54,9 +54,7 @@ implementation {
 
 	bool SetCntrTop(uint16_t wFreq)
 	{
-		//uint8_t bRet = 0xFF;
 		bool fRes=FALSE;
-		uint8_t i;
 
 		if(0xFF>m_bClkDivNdx)
 		{

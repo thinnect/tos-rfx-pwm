@@ -5,14 +5,14 @@
 #define TIMER_COUNTER_16B_MAX 0xFFFF
 
 /*
-typedef sClockDivider
+typedef struct sClockDivider
 {
 	uint16_t	wDivider;
 	uint8_t		bRegValue;
 } sClockDivider_t;
 */
 /*
-typedef sTimerProps
+typedef struct sTimerProps
 {
     uint8_t		wDividerNdx;
     uint16_t	wTop;

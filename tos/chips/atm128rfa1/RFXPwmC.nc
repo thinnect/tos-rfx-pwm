@@ -7,6 +7,8 @@ implementation {
 
 	// TODO implementation
 	components new RFXPwmP() as Module;
+	//Module = GeneralPWM;
+	GeneralPWM = Module.GeneralPWM;
 
 	components AtmegaGeneralIOC;
     Module.PinA -> AtmegaGeneralIOC.PortE3; //Hard-coded Port E, Pin 3
