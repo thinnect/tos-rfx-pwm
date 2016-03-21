@@ -1,3 +1,4 @@
+#include "loglevels.h"
 generic configuration RFXPwmC() {
 	provides {
 		interface GeneralPWM;

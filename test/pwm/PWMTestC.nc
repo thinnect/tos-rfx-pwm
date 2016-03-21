@@ -4,6 +4,7 @@
  * @author Raido Pahtma
  * @license MIT
  */
+#include "loglevels.h"
 configuration PWMTestC { }
 implementation {
 
@@ -20,13 +21,17 @@ implementation {
 	PWMTestP.GeneralPWM -> Timer3Pwm;
 
 	//components Leds as LedsC;
+	components LedsC;
 	//PWMTestP.Leds -> PWMTestP;
 	//PWMTestP.Leds -> LedsC;
+	PWMTestP.Leds -> LedsC;
 
 	#ifndef START_PRINTF_DELAY
 	    #define START_PRINTF_DELAY 50
   	#endif
 
+/*
   	components new StartPrintfC(START_PRINTF_DELAY);
   	PWMTestP.PrintfControl -> StartPrintfC.SplitControl;
+  	*/
 }

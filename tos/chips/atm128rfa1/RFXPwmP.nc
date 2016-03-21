@@ -12,16 +12,14 @@ generic module RFXPwmP() {
 		interface GeneralIO as PinB;
 		interface GeneralIO as PinC;
 		interface HplAtmegaCounter<uint16_t> as Counter;
-		//interface HplAtmegaCompare<uint16_t> as Compare[uint8_t channel];
 		interface HplAtmegaCompare<uint16_t> as Compare;
 	}
 }
 implementation {
+    #define __MODUUL__ "tests"
+    #define __LOG_LEVEL__ ( LOG_LEVEL_tests & BASE_LOG_LEVEL )
+    #include "log.h"
 
-	// TODO implementation
-
-
-	//const sClockDivider_t rgsClockDividers[]={{(uint16_t)1,(uint8_t)1,},{(uint16_t)1,(uint8_t)1,}}
 	const uint16_t m_rgwClockDividers[]={1,8,64,256,1024};
 	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
 
@@ -29,6 +27,8 @@ implementation {
 	uint16_t 	m_wCntrTop=0;
 	uint16_t	m_wCompare=0;
 	uint8_t 	m_bMode=0xFF;
+
+	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
 
 	//uint8_t GetClockDivider(uint16_t wFreq)
 	bool SetClockDivider(uint16_t wFreq)
@@ -161,11 +161,14 @@ implementation {
 		{
 			uint8_t bCmpMode = (TRUE == invert ? 2: 3);
 			m_wCompare = m_wCntrTop / (100 / duty_cycle);
-
-			call Counter.setMode(14);
+			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividers[m_bClkDivNdx]);
 			call Compare.setMode(bCmpMode);
+debug1("1 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x; tm %x cd %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3, m_bTimerMode, m_bClkDivNdx);
+
 			SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 			call Compare.set(m_wCompare); //OCnA/OCnB/OCnC??? TODO - check
+
+debug1("2 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3);			
 		}
 
 		return ret;
