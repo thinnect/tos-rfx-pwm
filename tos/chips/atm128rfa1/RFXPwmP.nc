@@ -29,8 +29,48 @@ implementation {
 	uint8_t 	m_bMode=0xFF;
 
 	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
+	const uint8_t	m_bTargetMinDutyCycleCnt=10;
+	const uint8_t	m_bMaxPrecisionFactorOverhead=2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
 
+	bool ChkCntTopAndCorrectDiv()
+	{
+		bool fRrecalcNeeded = FALSE;
+
+		if(0xFF != m_bClkDivNdx && 0 != m_wCntrTop &&
+			0 < m_bClkDivNdx && m_wCntrTop < (m_bTargetMinDutyCycleCnt*m_bMaxPrecisionFactorOverhead))
+		{
+			--m_bClkDivNdx;
+			fRrecalcNeeded = TRUE;
+		}
+
+		return fRrecalcNeeded;
+	}
+
+	/*
 	//uint8_t GetClockDivider(uint16_t wFreq)
+	bool SetClockDivider(uint16_t wFreq)
+	{
+		//uint8_t bRet = 0xFF;
+		bool fRes=FALSE;
+		uint8_t i;
+
+		for(i=1;i<=m_bNumClockDividers;++i)
+		{
+			if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]) >= wFreq)
+			{
+				//bRet=i;
+				//m_bClkDivNdx=i;
+				m_bClkDivNdx=m_bNumClockDividers-i;
+				fRes=TRUE;
+				break;
+			}
+//debug1("%d %d", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]), m_bNumClockDividers-i);
+		}
+debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]), m_bNumClockDividers-i, fRes);
+		//return bRet;
+		return fRes;
+	}
+	*/
 	bool SetClockDivider(uint16_t wFreq)
 	{
 		//uint8_t bRet = 0xFF;
@@ -40,9 +80,11 @@ implementation {
 		for(i=0;i<m_bNumClockDividers;++i)
 		{
 			if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[i]) >= wFreq)
+			//if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]) >= wFreq)
 			{
 				//bRet=i;
 				m_bClkDivNdx=i;
+				//m_bClkDivNdx=m_bNumClockDividers-i;
 				fRes=TRUE;
 				break;
 			}
@@ -52,7 +94,7 @@ implementation {
 		return fRes;
 	}
 
-	bool SetCntrTop(uint16_t wFreq)
+	bool CalcCntrTop(uint16_t wFreq)
 	{
 		bool fRes=FALSE;
 
@@ -104,11 +146,30 @@ implementation {
 				m_bMode=0xFF;
 				break;
 		}
+/*
+		if(0xFF != m_bMode && SetClockDivider(frequency))
+		{
+			err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
+		}
+
+	uint8_t 	m_bClkDivNdx=0xFF;
+	uint16_t 	m_wCntrTop=0;
+*/		
+//ChkCntTopAndCorrectDiv
 
 		if(0xFF != m_bMode && SetClockDivider(frequency))
 		{
-			err=(SetCntrTop(frequency) ? SUCCESS : FAIL);
+			err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
 		}
+/*
+		if(0xFF != m_bMode && SetClockDivider(frequency))
+		{
+			do
+			{
+				err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
+			} while(ChkCntTopAndCorrectDiv());
+		}
+*/
 
 		if(SUCCESS != err)
 		{
@@ -117,6 +178,7 @@ implementation {
 			m_wCompare=0;
 		}
 
+//debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d", m_bClkDivNdx, m_wCntrTop, m_wCompare);
 		return err;
 	}
 
@@ -159,16 +221,18 @@ implementation {
 
 		if(FAIL != ret)
 		{
-			uint8_t bCmpMode = (TRUE == invert ? 2: 3);
+			uint8_t bCmpMode = (TRUE != invert ? 2: 3);
 			m_wCompare = m_wCntrTop / (100 / duty_cycle);
 			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividers[m_bClkDivNdx]);
 			call Compare.setMode(bCmpMode);
-debug1("1 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x; tm %x cd %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3, m_bTimerMode, m_bClkDivNdx);
+//debug1("1 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x; tm %x cd %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3, m_bTimerMode, m_bClkDivNdx);
 
 			SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 			call Compare.set(m_wCompare); //OCnA/OCnB/OCnC??? TODO - check
 
-debug1("2 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3);			
+//debug1("2 DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3);			
+//debug1("DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x; tm %x cd %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3, m_bTimerMode, m_bClkDivNdx);
+debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d", m_bClkDivNdx, m_wCntrTop, m_wCompare);
 		}
 
 		return ret;
