@@ -18,5 +18,11 @@ implementation {
 
     components HplAtmRfa1Timer3C as PWMTimer;
     Module.Counter -> PWMTimer.Counter;
-    Module.Compare -> PWMTimer.Compare[0]; //Hard-coded channel A
+    //Module.Compare -> PWMTimer.Compare[0]; //Hard-coded channel A
+    
+    Module.CompareChA -> PWMTimer.Compare[0]; //Hard-coded channel A
+    Module.CompareChB -> PWMTimer.Compare[1]; //Hard-coded channel B
+    Module.CompareChC -> PWMTimer.Compare[2]; //Hard-coded channel C
+    
+    
 }

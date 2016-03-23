@@ -17,6 +17,9 @@ implementation {
 	components new TimerMilliC();
 	PWMTestP.Timer -> TimerMilliC;
 
+	components new TimerMilliC() as TimerPrint;
+	PWMTestP.TimerPrint -> TimerPrint;
+
 	components new RFXPwmC() as Timer3Pwm;
 	PWMTestP.GeneralPWM -> Timer3Pwm;
 
