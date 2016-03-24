@@ -1,11 +1,11 @@
 #include "loglevels.h"
-generic configuration RFXPwmC() {
+generic configuration RFXPwmTimer3C() {
 	provides {
 		interface GeneralPWM;
 	}
 }
 implementation {
-	components new RFXPwmP() as Module;
+	components new RFXPwmP(3) as Module;
 	//Module = GeneralPWM;
 	GeneralPWM = Module.GeneralPWM;
 
@@ -15,6 +15,7 @@ implementation {
     Module.Pin[2] -> AtmegaGeneralIOC.PortE5; //Hard-coded Port E, Pin 5
 
     components HplAtmRfa1Timer3C as PWMTimer;
-    Module.Counter -> PWMTimer.Counter;   
-    Module.Compare -> PWMTimer.Compare;    
+    Module.Counter -> PWMTimer.Counter;
+    Module.Compare -> PWMTimer.Compare;
+    Module.Capture -> PWMTimer.Capture;
 }

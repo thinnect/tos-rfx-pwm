@@ -1,7 +1,7 @@
 #include "RFXPwm.h"
 #include "generalpwm.h"
 
-generic module RFXPwmP() {
+generic module RFXPwmP(uint8_t g_channels) {
 	
 
 	provides {
@@ -9,10 +9,9 @@ generic module RFXPwmP() {
 	}
 	uses {
 		interface GeneralIO as Pin[uint8_t pin];
-		interface GeneralIO as PinB;
-		interface GeneralIO as PinC;
 		interface HplAtmegaCounter<uint16_t> as Counter;
 		interface HplAtmegaCompare<uint16_t> as Compare[uint8_t pin];
+		interface HplAtmegaCapture<uint16_t> as Capture;
 	}
 }
 implementation {
@@ -120,12 +119,8 @@ debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDi
 	}
 
 	void SetCounterTop(uint16_t wCntrTop)
-	{//Place-holder for setting counter top (falling edge)
-		//assign a value to reg ICRn or OCRnA depending on working mode
-		//Currently hard-coded for Timer/Counter 3
-
-		ICR3 = wCntrTop;//ICRn acts for all channels of a timer (mode 14),
-		//OCRnA can be used to set counter top per each channel inviditually (mode 15)
+	{//Set counter top (falling edge)
+		call Capture.set(wCntrTop);
 	}
 
 
@@ -202,7 +197,7 @@ debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDi
 		call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividers[m_bClkDivNdx]);
 		SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
-		if(FAIL != ret && 0x03 > channel)
+		if(FAIL != ret && g_channels > channel)
 		{
 			call Pin.makeOutput[channel]();
 			call Pin.set[channel]();
@@ -223,7 +218,7 @@ debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d, ch %d, dc=%d", m_b
 	default async command void Pin.set[uint8_t i]() {}
 	default async command void Pin.makeInput[uint8_t i]() {}
 	default async command void Pin.makeOutput[uint8_t i]() {}
-	default async command bool Pin.isInput[uint8_t i]() {}
+	default async command bool Pin.isInput[uint8_t i]() {return FALSE;}
 
 	default async command void Compare.setMode[uint8_t channel](uint8_t bCmpMode) {}
 	default async command void Compare.set[uint8_t channel](uint16_t bCmpMode) {}
@@ -232,13 +227,15 @@ debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d, ch %d, dc=%d", m_b
     async event void Counter.overflow() { }
 
     async event void Compare.fired[uint8_t channel]() { }
+
+    async event void Capture.fired() { }
     
 
 	async command error_t GeneralPWM.stop(uint8_t channel)
 	{
 		error_t ret = SUCCESS;
 
-		if(channel < 0x03)
+		if(channel < g_channels)
 		{
 			call Pin.makeInput[channel]();
 			call Pin.set[channel]();
