@@ -20,6 +20,7 @@ implementation {
     #include "log.h"
 
 	const uint16_t m_rgwClockDividers[]={1,8,64,256,1024};
+	const uint8_t m_rgwClockDividerRegValues[]={1,2,3,4,5};
 	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
 
 	uint8_t 	m_bClkDivNdx=0xFF;
@@ -28,7 +29,7 @@ implementation {
 	uint8_t 	m_bMode=0xFF;
 
 	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
-	const uint8_t	m_bTargetMinDutyCycleCnt=10;
+	const uint8_t	m_bTargetMinDutyCycleCnt=100;
 	const uint8_t	m_bMaxPrecisionFactorOverhead=2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
 
 	bool ChkCntTopAndCorrectDiv()
@@ -45,11 +46,8 @@ implementation {
 		return fRrecalcNeeded;
 	}
 
-	/*
-	//uint8_t GetClockDivider(uint16_t wFreq)
 	bool SetClockDivider(uint16_t wFreq)
 	{
-		//uint8_t bRet = 0xFF;
 		bool fRes=FALSE;
 		uint8_t i;
 
@@ -57,42 +55,14 @@ implementation {
 		{
 			if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]) >= wFreq)
 			{
-				//bRet=i;
-				//m_bClkDivNdx=i;
 				m_bClkDivNdx=m_bNumClockDividers-i;
 				fRes=TRUE;
 				break;
 			}
-//debug1("%d %d", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]), m_bNumClockDividers-i);
 		}
-debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]), m_bNumClockDividers-i, fRes);
-		//return bRet;
 		return fRes;
 	}
-	*/
-	bool SetClockDivider(uint16_t wFreq)
-	{
-		//uint8_t bRet = 0xFF;
-		bool fRes=FALSE;
-		uint8_t i;
-
-		for(i=0;i<m_bNumClockDividers;++i)
-		{
-			if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[i]) >= wFreq)
-			//if((COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDividers-i]) >= wFreq)
-			{
-				//bRet=i;
-				m_bClkDivNdx=i;
-				//m_bClkDivNdx=m_bNumClockDividers-i;
-				fRes=TRUE;
-				break;
-			}
-		}
-
-		//return bRet;
-		return fRes;
-	}
-
+	
 	bool CalcCntrTop(uint16_t wFreq)
 	{
 		bool fRes=FALSE;
@@ -141,22 +111,7 @@ debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDi
 				m_bMode=0xFF;
 				break;
 		}
-/*
-		if(0xFF != m_bMode && SetClockDivider(frequency))
-		{
-			err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
-		}
 
-	uint8_t 	m_bClkDivNdx=0xFF;
-	uint16_t 	m_wCntrTop=0;
-*/		
-//ChkCntTopAndCorrectDiv
-
-		if(0xFF != m_bMode && SetClockDivider(frequency))
-		{
-			err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
-		}
-/*
 		if(0xFF != m_bMode && SetClockDivider(frequency))
 		{
 			do
@@ -164,7 +119,7 @@ debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDi
 				err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
 			} while(ChkCntTopAndCorrectDiv());
 		}
-*/
+
 
 		if(SUCCESS != err)
 		{
@@ -193,20 +148,31 @@ debug1("%d %d %x", (COMMON_TIMER_BASE_FREQUENCY/m_rgwClockDividers[m_bNumClockDi
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
 
 		uint8_t bCmpMode = (TRUE != invert ? 2: 3);
-		m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
-		call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividers[m_bClkDivNdx]);
-		SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
-		if(FAIL != ret && g_channels > channel)
+		if(0 != duty_cycle)
 		{
-			call Pin.makeOutput[channel]();
+			m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
+			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
+			SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
+
+			if(FAIL != ret && g_channels > channel)
+			{
+				call Pin.makeOutput[channel]();
+				call Pin.set[channel]();
+				call Compare.setMode[channel](bCmpMode);
+				call Compare.set[channel](m_wCompare);
+			}
+		}
+		else
+		{
+			call Pin.makeInput[channel]();
 			call Pin.set[channel]();
-			call Compare.setMode[channel](bCmpMode);
-			call Compare.set[channel](m_wCompare);
+			call Compare.setMode[channel](0);
+			call Compare.set[channel](0);
 		}
 
 		//if(FAIL == ret && 0 == call PinA.isInput() && 0 == call PinB.isInput() && 0 == call PinC.isInput())
-		if(FAIL == ret && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
+		if((0 == duty_cycle || FAIL == ret) && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
 		{
 			call Counter.setMode(0);
 			SetCounterTop(0);
