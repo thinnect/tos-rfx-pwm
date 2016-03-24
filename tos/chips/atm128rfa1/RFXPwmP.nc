@@ -250,7 +250,7 @@ debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d", m_bClkDivNdx, m_w
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
 
 		uint8_t bCmpMode = (TRUE != invert ? 2: 3);
-		m_wCompare = m_wCntrTop / (100 / duty_cycle);
+		m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
 		call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividers[m_bClkDivNdx]);
 		SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
