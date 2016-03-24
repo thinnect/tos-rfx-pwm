@@ -28,6 +28,9 @@ implementation {
     uint32_t m_bDutyCycleUpdateDelay;
     uint8_t m_bCurrDutyCycle = 0;
     bool m_fDutyCycleIncrement = TRUE;
+    const uint16_t m_rgFrequencyValues[] = {1,20,50,100,1000};
+    const uint8_t m_bFreqValNum = (uint8_t)(sizeof(m_rgFrequencyValues)/sizeof(uint16_t));
+    uint8_t m_bCurrFreqNdx = 0;
     //!Ledtest
 
 	event void Boot.booted() {
@@ -40,7 +43,7 @@ debug1("tf");
 		//info1("Timer.fired()");
 		//debug1("DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x, ICR3 %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B, ICR3);
 		// 1kHz, PWM fast mode
-		call GeneralPWM.configure(1000, PWM_MODE_FAST);
+		call GeneralPWM.configure(20, PWM_MODE_FAST);
 		//debug1("DDRE %x, TIMSK3 %x, OCR3A %x, OCR3C %x, TCCR3A %x, TCCR3B %x", DDRE, TIMSK3, OCR3A, OCR3C, TCCR3A, TCCR3B);
 
 		// 33% dutycycle on channel A
@@ -73,18 +76,6 @@ debug1("tf");
 	}
 
 	event void TimerLedLevels.fired() {
-		/*
-	    //LedTest
-	    const uint8_t m_bMaxLed = 2;
-	    uint8_t m_bLedNum = 0;
-	    const uint8_t m_bMaxDuctyCycle = 100;
-	    const uint32_t m_bFullCycleLoopTime = 5000UL;//MS
-	    const uint8_t m_bDuctyCycleStep = 5;
-	    uint32_t m_bDutyCycleUpdateDelay = m_bFullCycleLoopTime / (m_bMaxDuctyCycle / m_bDuctyCycleStep);//MS
-	    uint8_t m_bCurrDutyCycle = 0;
-	    //!Ledtest
-	    */
-
 	    if(m_bCurrDutyCycle == 0 && !m_fDutyCycleIncrement)
 	    {
 	    	call GeneralPWM.start(m_bLedNum, m_bCurrDutyCycle, FALSE); //Leave current channel at 0 duty cycle level
@@ -97,6 +88,14 @@ debug1("tf");
 	    }
 
 	    call GeneralPWM.start(m_bLedNum, m_bCurrDutyCycle, FALSE);
+
+   	    if(0 == m_bCurrDutyCycle && 2 == m_bLedNum && m_fDutyCycleIncrement)
+	    {
+    		m_bCurrFreqNdx = (m_bCurrFreqNdx >= m_bFreqValNum ? 0 : m_bCurrFreqNdx);
+    		call GeneralPWM.configure(m_rgFrequencyValues[m_bCurrFreqNdx], PWM_MODE_FAST);
+    		debug1("F %d, Ndx %d;", m_rgFrequencyValues[m_bCurrFreqNdx], m_bCurrFreqNdx);
+    		++m_bCurrFreqNdx;
+	    }
 
 	    if(!m_fDutyCycleIncrement)
 	    {
