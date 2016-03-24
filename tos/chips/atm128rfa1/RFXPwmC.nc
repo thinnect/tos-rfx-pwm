@@ -5,24 +5,16 @@ generic configuration RFXPwmC() {
 	}
 }
 implementation {
-
-	// TODO implementation
 	components new RFXPwmP() as Module;
 	//Module = GeneralPWM;
 	GeneralPWM = Module.GeneralPWM;
 
 	components AtmegaGeneralIOC;
-    Module.PinA -> AtmegaGeneralIOC.PortE3; //Hard-coded Port E, Pin 3
-    Module.PinB -> AtmegaGeneralIOC.PortE4; //Hard-coded Port E, Pin 4
-    Module.PinC -> AtmegaGeneralIOC.PortE5; //Hard-coded Port E, Pin 5
+    Module.Pin[0] -> AtmegaGeneralIOC.PortE3; //Hard-coded Port E, Pin 3
+    Module.Pin[1] -> AtmegaGeneralIOC.PortE4; //Hard-coded Port E, Pin 4
+    Module.Pin[2] -> AtmegaGeneralIOC.PortE5; //Hard-coded Port E, Pin 5
 
     components HplAtmRfa1Timer3C as PWMTimer;
-    Module.Counter -> PWMTimer.Counter;
-    //Module.Compare -> PWMTimer.Compare[0]; //Hard-coded channel A
-    
-    Module.CompareChA -> PWMTimer.Compare[0]; //Hard-coded channel A
-    Module.CompareChB -> PWMTimer.Compare[1]; //Hard-coded channel B
-    Module.CompareChC -> PWMTimer.Compare[2]; //Hard-coded channel C
-    
-    
+    Module.Counter -> PWMTimer.Counter;   
+    Module.Compare -> PWMTimer.Compare;    
 }
