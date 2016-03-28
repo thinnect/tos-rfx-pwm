@@ -1,25 +1,9 @@
 #ifndef __RFXPWM_H__
 #define __RFXPWM_H__
 
-//#define COMMON_TIMER_BASE_FREQUENCY (32768U/2)
-//#define COMMON_TIMER_BASE_FREQUENCY (16000000UL/2)
 #define COMMON_TIMER_BASE_FREQUENCY (16000000UL)
+#define COMMON_ASYNC_TIMER_BASE_FREQUENCY (32768UL) // This frequency should be used, but current frequency constantly stays at 128Hz
 #define TIMER_COUNTER_16B_MAX 0xFFFF
+#define TIMER_COUNTER_8B_MAX 0xFF
 
-/*
-typedef struct sClockDivider
-{
-	uint16_t	wDivider;
-	uint8_t		bRegValue;
-} sClockDivider_t;
-*/
-/*
-typedef struct sTimerProps
-{
-    uint8_t		wDividerNdx;
-    uint16_t	wTop;
-    uint16_t	wMatch;
-
-} sTimerProps_t;
-*/
 #endif //__RFXPWM_H__

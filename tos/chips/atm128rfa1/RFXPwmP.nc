@@ -93,6 +93,24 @@ implementation {
 		call Capture.set(wCntrTop);
 	}
 
+	bool IsOutputOnAnyChannel()
+	{
+		bool fRet=FALSE;
+		uint8_t i;
+
+		for(i=0;i<g_channels;++i)
+		{
+			if(0 == call Pin.isInput[i]())
+			{
+				fRet = TRUE;
+				break;
+			}
+			
+		}
+
+		return fRet;
+	}
+
 
 	async command error_t GeneralPWM.configure(uint32_t frequency, uint8_t mode)
 	{
@@ -117,7 +135,8 @@ implementation {
 			do
 			{
 				err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
-			} while(ChkCntTopAndCorrectDiv());
+			} while(ChkCntTopAndCorrectDiv() && FAIL != err);
+			//} while(ChkCntTopAndCorrectDiv());
 		}
 
 
@@ -172,7 +191,8 @@ implementation {
 		}
 
 		//if(FAIL == ret && 0 == call PinA.isInput() && 0 == call PinB.isInput() && 0 == call PinC.isInput())
-		if((0 == duty_cycle || FAIL == ret) && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
+		//if((0 == duty_cycle || FAIL == ret) && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
+		if((0 == duty_cycle || FAIL == ret) && !IsOutputOnAnyChannel())
 		{
 			call Counter.setMode(0);
 			SetCounterTop(0);
@@ -212,7 +232,8 @@ debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d, ch %d, dc=%d", m_b
 			ret = FAIL;
 		}
 
-		if(SUCCESS == ret && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
+		//if(SUCCESS == ret && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
+		if(SUCCESS == ret && !IsOutputOnAnyChannel())
 		{
 			call Counter.setMode(0);
 		}
