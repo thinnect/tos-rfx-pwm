@@ -6,6 +6,7 @@ module PWMTestP {
 		interface Timer<TMilli> as TimerPrint;
 		interface Timer<TMilli> as TimerLedLevels;
 		interface GeneralPWM;
+		interface GeneralPWM as Timer2Pwm;
 		interface Boot @exactlyonce();
 		interface Leds;
 	}
@@ -91,10 +92,23 @@ debug1("tf");
 
    	    if(0 == m_bCurrDutyCycle && 2 == m_bLedNum && m_fDutyCycleIncrement)
 	    {
+	    	++m_bCurrFreqNdx;
     		m_bCurrFreqNdx = (m_bCurrFreqNdx >= m_bFreqValNum ? 0 : m_bCurrFreqNdx);
     		call GeneralPWM.configure(m_rgFrequencyValues[m_bCurrFreqNdx], PWM_MODE_FAST);
     		debug1("F %d, Ndx %d;", m_rgFrequencyValues[m_bCurrFreqNdx], m_bCurrFreqNdx);
-    		++m_bCurrFreqNdx;
+    		//++m_bCurrFreqNdx;
+
+
+   			call Timer2Pwm.configure(30, PWM_MODE_FAST);
+			call Timer2Pwm.start(0, m_bCurrFreqNdx*12, FALSE);
+
+//			debug1("%x %x %x", TCCR2A, TCCR2B, OCR2A);
+//			TCCR2A = 0x83;
+			//  TCCR2B = 0x07;
+			//OCR2A = 0x0c;
+//			OCR2A = (uint8_t)((float)0xFF / ((float)100 / (float)(m_bCurrFreqNdx*12)));
+
+//			debug1("%x %x", ASSR, (ASSR & (0x3 << AS2)));
 	    }
 
 	    if(!m_fDutyCycleIncrement)

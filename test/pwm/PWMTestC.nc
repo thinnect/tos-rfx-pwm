@@ -26,6 +26,10 @@ implementation {
 	components new RFXPwmC() as Timer3Pwm;
 	PWMTestP.GeneralPWM -> Timer3Pwm;
 
+	//components new RFXPwmTimer2C() as Timer2Pwm;
+	components new RFXTimer2PwmC() as Timer2Pwm;
+	PWMTestP.Timer2Pwm -> Timer2Pwm;
+
 	//components Leds as LedsC;
 	components LedsC;
 	//PWMTestP.Leds -> PWMTestP;
