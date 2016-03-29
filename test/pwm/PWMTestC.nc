@@ -17,31 +17,24 @@ implementation {
 	components new TimerMilliC();
 	PWMTestP.Timer -> TimerMilliC;
 
-	components new TimerMilliC() as TimerPrint;
-	PWMTestP.TimerPrint -> TimerPrint;
-
 	components new TimerMilliC() as TimerLedLevels;
 	PWMTestP.TimerLedLevels -> TimerLedLevels;
 
-	components new RFXPwmC() as Timer3Pwm;
-	PWMTestP.GeneralPWM -> Timer3Pwm;
+	components new RFXTimer3PwmC() as Timer3Pwm;
+	PWMTestP.Timer3Pwm -> Timer3Pwm;
 
-	//components new RFXPwmTimer2C() as Timer2Pwm;
 	components new RFXTimer2PwmC() as Timer2Pwm;
 	PWMTestP.Timer2Pwm -> Timer2Pwm;
 
-	//components Leds as LedsC;
 	components LedsC;
-	//PWMTestP.Leds -> PWMTestP;
-	//PWMTestP.Leds -> LedsC;
 	PWMTestP.Leds -> LedsC;
 
 	#ifndef START_PRINTF_DELAY
-	    #define START_PRINTF_DELAY 50
-  	#endif
+		#define START_PRINTF_DELAY 50
+	#endif
 
 /*
-  	components new StartPrintfC(START_PRINTF_DELAY);
-  	PWMTestP.PrintfControl -> StartPrintfC.SplitControl;
-  	*/
+	components new StartPrintfC(START_PRINTF_DELAY);
+	PWMTestP.PrintfControl -> StartPrintfC.SplitControl;
+	*/
 }
