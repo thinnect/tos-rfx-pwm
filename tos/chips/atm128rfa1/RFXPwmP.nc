@@ -136,7 +136,6 @@ implementation {
 			{
 				err=(CalcCntrTop(frequency) ? SUCCESS : FAIL);
 			} while(ChkCntTopAndCorrectDiv() && FAIL != err);
-			//} while(ChkCntTopAndCorrectDiv());
 		}
 
 
@@ -147,7 +146,6 @@ implementation {
 			m_wCompare=0;
 		}
 
-//debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d", m_bClkDivNdx, m_wCntrTop, m_wCompare);
 		return err;
 	}
 
@@ -165,10 +163,9 @@ implementation {
 	async command error_t GeneralPWM.start(uint8_t channel, uint8_t duty_cycle, bool invert)
 	{
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
-
 		uint8_t bCmpMode = (TRUE != invert ? 2: 3);
 
-		if(0 != duty_cycle)
+		if((0 != duty_cycle && !invert) || (100 != duty_cycle && invert))
 		{
 			m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
 			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
@@ -189,15 +186,14 @@ implementation {
 			call Compare.setMode[channel](0);
 			call Compare.set[channel](0);
 		}
+		
 
-		//if(FAIL == ret && 0 == call PinA.isInput() && 0 == call PinB.isInput() && 0 == call PinC.isInput())
-		//if((0 == duty_cycle || FAIL == ret) && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
-		if((0 == duty_cycle || FAIL == ret) && !IsOutputOnAnyChannel())
+		if(!((0 != duty_cycle && !invert) || (100 != duty_cycle && invert)) && !IsOutputOnAnyChannel())
 		{
 			call Counter.setMode(0);
 			SetCounterTop(0);
 		}
-debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d, ch %d, dc=%d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle);
+debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
 		return ret;
 	}
 
@@ -210,12 +206,12 @@ debug1("conf-d m_bClkDivNdx %d, m_wCntrTop %d, m_wCompare %d, ch %d, dc=%d", m_b
 	default async command void Compare.set[uint8_t channel](uint16_t bCmpMode) {}
 
 
-    async event void Counter.overflow() { }
+	async event void Counter.overflow() { }
 
-    async event void Compare.fired[uint8_t channel]() { }
+	async event void Compare.fired[uint8_t channel]() { }
 
-    async event void Capture.fired() { }
-    
+	async event void Capture.fired() { }
+
 
 	async command error_t GeneralPWM.stop(uint8_t channel)
 	{
