@@ -21,10 +21,17 @@ implementation {
 	PWMTestP.TimerLedLevels -> TimerLedLevels;
 
 	components new RFXTimer3PwmC() as Timer3Pwm;
-	PWMTestP.Timer3Pwm -> Timer3Pwm;
+	PWMTestP.TimerPwmRGB -> Timer3Pwm;
 
-	components new RFXTimer2PwmC() as Timer2Pwm;
-	PWMTestP.Timer2Pwm -> Timer2Pwm;
+	//components new RFXTimer2PwmC() as Timer2Pwm;
+	//PWMTestP.Timer2Pwm -> Timer2Pwm;
+
+	components new RFXTimer1PwmC() as Timer1Pwm;
+	PWMTestP.TimerPwmWhite -> Timer1Pwm;
+
+	components AtmegaGeneralIOC;
+	//PWMTestP.Pin[0] -> AtmegaGeneralIOC.PortB4; //Hard-coded Port B, Pin 4
+	PWMTestP.PinB4 -> AtmegaGeneralIOC.PortB4; //Hard-coded Port B, Pin 4
 
 	components LedsC;
 	PWMTestP.Leds -> LedsC;
