@@ -5,7 +5,7 @@ generic configuration RFXTimer3PwmC() {
 	}
 }
 implementation {
-	components new RFXPwmP(3) as Module;
+	components new RFXPwmP(3, TRUE) as Module;
 	//Module = GeneralPWM;
 	GeneralPWM = Module.GeneralPWM;
 

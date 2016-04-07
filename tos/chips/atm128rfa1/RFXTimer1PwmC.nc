@@ -5,7 +5,7 @@ generic configuration RFXTimer1PwmC() {
 	}
 }
 implementation {
-	components new RFXPwmP(1) as Module;
+	components new RFXPwmP(1, FALSE) as Module;
 	GeneralPWM = Module.GeneralPWM;
 
 	components AtmegaGeneralIOC;

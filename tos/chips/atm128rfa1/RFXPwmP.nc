@@ -1,8 +1,8 @@
 #include "RFXPwm.h"
 #include "generalpwm.h"
 
-generic module RFXPwmP(uint8_t g_channels) {
-	
+generic module RFXPwmP(uint8_t g_channels, bool fSetInputOnZeroDutyCycle) {
+	 
 
 	provides {
 		interface GeneralPWM;
@@ -164,10 +164,20 @@ implementation {
 	{
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
 		uint8_t bCmpMode = (TRUE != invert ? 2: 3);
+		bool	fZeroDC = !((0 != duty_cycle && !invert) || (100 != duty_cycle && invert));
+//uint8_t bWaySet = 0;
 
-		if((0 != duty_cycle && !invert) || (100 != duty_cycle && invert))
+		if(!fZeroDC || !fSetInputOnZeroDutyCycle)
 		{
-			m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
+			if(fZeroDC)
+			{
+				m_wCompare = 0;
+			}
+			else
+			{
+				m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
+			}
+			
 			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
 			SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
@@ -177,14 +187,16 @@ implementation {
 				call Pin.set[channel]();
 				call Compare.setMode[channel](bCmpMode);
 				call Compare.set[channel](m_wCompare);
+//bWaySet |= 1;
 			}
 		}
-		else
+		else if(g_channels > channel)
 		{
 			call Pin.makeInput[channel]();
 			call Pin.set[channel]();
 			call Compare.setMode[channel](0);
 			call Compare.set[channel](0);
+//bWaySet |= 2;
 		}
 		
 
@@ -192,8 +204,10 @@ implementation {
 		{
 			call Counter.setMode(0);
 			SetCounterTop(0);
+//bWaySet |= 4;
 		}
-debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
+//debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
+//debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d ws %d T %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert, bWaySet, g_channels);
 		return ret;
 	}
 
@@ -228,7 +242,6 @@ debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m
 			ret = FAIL;
 		}
 
-		//if(SUCCESS == ret && 0 == call Pin.isInput[0]() && 0 == call Pin.isInput[1]() && 0 == call Pin.isInput[2]())
 		if(SUCCESS == ret && !IsOutputOnAnyChannel())
 		{
 			call Counter.setMode(0);
