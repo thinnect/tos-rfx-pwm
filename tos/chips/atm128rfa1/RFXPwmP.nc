@@ -1,7 +1,7 @@
 #include "RFXPwm.h"
 #include "generalpwm.h"
 
-generic module RFXPwmP(uint8_t g_channels, bool fSetInputOnZeroDutyCycle) {
+generic module RFXPwmP(uint8_t g_channels) {
 	 
 
 	provides {
@@ -31,6 +31,8 @@ implementation {
 	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
 	const uint8_t	m_bTargetMinDutyCycleCnt=100;
 	const uint8_t	m_bMaxPrecisionFactorOverhead=2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
+
+	bool		m_fIsChannelUsed[MAX_CHANNELS];
 
 	bool ChkCntTopAndCorrectDiv()
 	{
@@ -100,7 +102,8 @@ implementation {
 
 		for(i=0;i<g_channels;++i)
 		{
-			if(0 == call Pin.isInput[i]())
+			//if(0 == call Pin.isInput[i]())
+			if(m_fIsChannelUsed[i])
 			{
 				fRet = TRUE;
 				break;
@@ -115,6 +118,12 @@ implementation {
 	async command error_t GeneralPWM.configure(uint32_t frequency, uint8_t mode)
 	{
 		error_t err = FAIL;
+		uint8_t b;
+
+		for(b=0;b<(sizeof(m_fIsChannelUsed)/sizeof(bool));++b)
+		{
+			m_fIsChannelUsed[b] = FALSE;
+		}
 
 		switch(mode)
 		{
@@ -162,59 +171,76 @@ implementation {
 
 	async command error_t GeneralPWM.start(uint8_t channel, uint8_t duty_cycle, bool invert)
 	{
-		error_t ret = (0xFF == m_bMode || 100 < duty_cycle ? FAIL : SUCCESS);
-		uint8_t bCmpMode = (TRUE != invert ? 2: 3);
-		bool	fZeroDC = !((0 != duty_cycle && !invert) || (100 != duty_cycle && invert));
-//uint8_t bWaySet = 0;
-
-		if(!fZeroDC || !fSetInputOnZeroDutyCycle)
+		error_t ret = (0xFF == m_bMode || 100 < duty_cycle || g_channels < channel || MAX_CHANNELS < g_channels ? FAIL : SUCCESS);
+		uint8_t bCmpMode;
+		bool	fFullDC = ((100 == duty_cycle && !invert) || (0 == duty_cycle && invert));
+uint8_t bDBGWaySet = 0;
+		
+		if(SUCCESS == ret)
 		{
-			if(fZeroDC)
+			if(100 == duty_cycle || 0 == duty_cycle)
 			{
-				m_wCompare = 0;
+				bCmpMode = 0;
 			}
 			else
 			{
-				m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
+				bCmpMode = (TRUE != invert ? 2: 3);
 			}
-			
-			call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
-			SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
-			if(FAIL != ret && g_channels > channel)
+			call Pin.makeOutput[channel]();			
+			if(0 != bCmpMode)
 			{
-				call Pin.makeOutput[channel]();
-				call Pin.set[channel]();
-				call Compare.setMode[channel](bCmpMode);
-				call Compare.set[channel](m_wCompare);
-//bWaySet |= 1;
-			}
-		}
-		else if(g_channels > channel)
-		{
-			call Pin.makeInput[channel]();
-			call Pin.set[channel]();
-			call Compare.setMode[channel](0);
-			call Compare.set[channel](0);
-//bWaySet |= 2;
-		}
-		
+				//if(fZeroDC)
+				if(FALSE)
+				{
+					m_wCompare = 0;
+				}
+				else
+				{
+					m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
+				}
+				
+				call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
+				SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
-		if(!((0 != duty_cycle && !invert) || (100 != duty_cycle && invert)) && !IsOutputOnAnyChannel())
-		{
-			call Counter.setMode(0);
-			SetCounterTop(0);
-//bWaySet |= 4;
+				m_fIsChannelUsed[channel] = TRUE;
+				call Pin.set[channel]();
+				call Compare.set[channel](m_wCompare);
+bDBGWaySet |= 1;
+			}
+			else if(fFullDC)
+			{
+				//call Pin.makeInput[channel]();
+				m_fIsChannelUsed[channel] = FALSE;
+				call Pin.set[channel]();
+bDBGWaySet |= 2;
+			}
+			else
+			{
+				//call Pin.makeInput[channel]();
+				m_fIsChannelUsed[channel] = FALSE;
+				call Pin.clr[channel]();
+bDBGWaySet |= 4;
+			}
+
+			call Compare.setMode[channel](bCmpMode);
+
+			//if(!((0 != duty_cycle && !invert) || (100 != duty_cycle && invert)) && !IsOutputOnAnyChannel())
+			if(!IsOutputOnAnyChannel())
+			{
+				call Counter.setMode(0);
+				SetCounterTop(0);
+bDBGWaySet |= 8;
+			}
 		}
 //debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
-//debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d ws %d T %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert, bWaySet, g_channels);
+debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, o/p %d inv %d ws %d T %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, m_fIsChannelUsed[channel], invert, bDBGWaySet, g_channels);
 		return ret;
 	}
 
 	default async command void Pin.set[uint8_t i]() {}
-	default async command void Pin.makeInput[uint8_t i]() {}
+	default async command void Pin.clr[uint8_t i]() {}
 	default async command void Pin.makeOutput[uint8_t i]() {}
-	default async command bool Pin.isInput[uint8_t i]() {return FALSE;}
 
 	default async command void Compare.setMode[uint8_t channel](uint8_t bCmpMode) {}
 	default async command void Compare.set[uint8_t channel](uint16_t bCmpMode) {}
@@ -233,8 +259,10 @@ implementation {
 
 		if(channel < g_channels)
 		{
-			call Pin.makeInput[channel]();
-			call Pin.set[channel]();
+			//call Pin.makeInput[channel]();
+			m_fIsChannelUsed[channel] = FALSE;
+			//call Pin.set[channel]();
+			call Pin.clr[channel]();
 			call Compare.setMode[channel](0);
 		}
 		else
