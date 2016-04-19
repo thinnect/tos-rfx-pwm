@@ -1,5 +1,5 @@
 #include "loglevels.h"
-generic configuration RFXTimer2PwmC() {
+configuration RFXTimer2PwmC {
 	provides {
 		interface GeneralPWM;
 	}
