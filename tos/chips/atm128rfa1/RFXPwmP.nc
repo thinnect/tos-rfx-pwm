@@ -2,7 +2,7 @@
 #include "generalpwm.h"
 
 generic module RFXPwmP(uint8_t g_channels) {
-
+	 
 
 	provides {
 		interface GeneralPWM;
@@ -23,16 +23,16 @@ implementation {
 	const uint8_t m_rgwClockDividerRegValues[]={1,2,3,4,5};
 	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
 
-	uint8_t 	m_bClkDivNdx=0xFF;
-	uint16_t 	m_wCntrTop=0;
-	uint16_t	m_wCompare=0;
-	uint8_t 	m_bMode=0xFF;
+	norace uint8_t 	m_bClkDivNdx=0xFF;
+	norace uint16_t 	m_wCntrTop=0;
+	norace uint16_t	m_wCompare=0;
+	norace uint8_t 	m_bMode=0xFF;
 
 	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
 	const uint8_t	m_bTargetMinDutyCycleCnt=100;
 	const uint8_t	m_bMaxPrecisionFactorOverhead=2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
 
-	bool		m_fIsChannelUsed[MAX_CHANNELS];
+	norace bool		m_fIsChannelUsed[MAX_CHANNELS];
 
 	bool ChkCntTopAndCorrectDiv()
 	{
@@ -64,7 +64,7 @@ implementation {
 		}
 		return fRes;
 	}
-
+	
 	bool CalcCntrTop(uint16_t wFreq)
 	{
 		bool fRes=FALSE;
@@ -108,7 +108,7 @@ implementation {
 				fRet = TRUE;
 				break;
 			}
-
+			
 		}
 
 		return fRet;
@@ -175,7 +175,7 @@ implementation {
 		uint8_t bCmpMode;
 		bool	fFullDC = ((100 == duty_cycle && !invert) || (0 == duty_cycle && invert));
 uint8_t bDBGWaySet = 0;
-
+		
 		if(SUCCESS == ret)
 		{
 			if(100 == duty_cycle || 0 == duty_cycle)
@@ -187,7 +187,7 @@ uint8_t bDBGWaySet = 0;
 				bCmpMode = (TRUE != invert ? 2: 3);
 			}
 
-			call Pin.makeOutput[channel]();
+			call Pin.makeOutput[channel]();			
 			if(0 != bCmpMode)
 			{
 				//if(fZeroDC)
@@ -199,7 +199,7 @@ uint8_t bDBGWaySet = 0;
 				{
 					m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
 				}
-
+				
 				call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
 				SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
@@ -274,7 +274,5 @@ debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, o/p %d inv %d ws %d T %d
 		{
 			call Counter.setMode(0);
 		}
-
-		return ret;
 	}
 }
