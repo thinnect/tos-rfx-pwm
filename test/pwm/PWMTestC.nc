@@ -20,13 +20,15 @@ implementation {
 	components new TimerMilliC() as TimerLedLevels;
 	PWMTestP.TimerLedLevels -> TimerLedLevels;
 
-	components new RFXTimer3PwmC() as Timer3Pwm;
+	//components new RFXTimer3PwmC() as Timer3Pwm;
+	components RFXTimer3PwmC as Timer3Pwm;
 	PWMTestP.TimerPwmRGB -> Timer3Pwm;
 
 	//components new RFXTimer2PwmC() as Timer2Pwm;
 	//PWMTestP.Timer2Pwm -> Timer2Pwm;
 
-	components new RFXTimer1PwmC() as Timer1Pwm;
+	//components new RFXTimer1PwmC() as Timer1Pwm;
+	components RFXTimer1PwmC as Timer1Pwm;
 	PWMTestP.TimerPwmWhite -> Timer1Pwm;
 
 	components AtmegaGeneralIOC;
