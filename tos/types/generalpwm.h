@@ -10,4 +10,3 @@ enum general_pwm_modes {
 };
 
 #endif // GENERALPWM_H_
-
