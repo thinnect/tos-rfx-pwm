@@ -1,9 +1,10 @@
+/*
+ * @author MxA.M
+ * @license MIT
+ */
 #include "RFXPwm.h"
 #include "generalpwm.h"
-
 generic module RFXPwmP(uint8_t g_channels) {
-	 
-
 	provides {
 		interface GeneralPWM;
 	}
@@ -19,20 +20,20 @@ implementation {
     #define __LOG_LEVEL__ ( LOG_LEVEL_tests & BASE_LOG_LEVEL )
     #include "log.h"
 
-	const uint16_t m_rgwClockDividers[]={1,8,64,256,1024};
-	const uint8_t m_rgwClockDividerRegValues[]={1,2,3,4,5};
-	const uint8_t m_bNumClockDividers=(uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
+	const uint16_t m_rgwClockDividers[] = {1,8,64,256,1024};
+	const uint8_t m_rgwClockDividerRegValues[] = {1,2,3,4,5};
+	const uint8_t m_bNumClockDividers = (uint8_t)(sizeof(m_rgwClockDividers)/sizeof(uint16_t));
 
-	norace uint8_t 	m_bClkDivNdx=0xFF;
-	norace uint16_t 	m_wCntrTop=0;
-	norace uint16_t	m_wCompare=0;
-	norace uint8_t 	m_bMode=0xFF;
+	norace uint8_t  m_bClkDivNdx = 0xFF;
+	norace uint16_t m_wCntrTop = 0;
+	norace uint16_t m_wCompare = 0;
+	norace uint8_t  m_bMode = 0xFF;
 
-	const uint8_t	m_bTimerMode=0x0E;//Fast PWM, TOP = ICRn
-	const uint8_t	m_bTargetMinDutyCycleCnt=100;
-	const uint8_t	m_bMaxPrecisionFactorOverhead=2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
+	const uint8_t   m_bTimerMode = 0x0E;//Fast PWM, TOP = ICRn
+	const uint8_t   m_bTargetMinDutyCycleCnt = 100;
+	const uint8_t   m_bMaxPrecisionFactorOverhead = 2; //means that over (m_bTargetDutyCyclyPrecision*m_bMaxPrecisionFactorOverhead) is too much
 
-	norace bool		m_fIsChannelUsed[MAX_CHANNELS];
+	norace bool     m_fIsChannelUsed[MAX_CHANNELS];
 
 	bool ChkCntTopAndCorrectDiv()
 	{
@@ -64,7 +65,7 @@ implementation {
 		}
 		return fRes;
 	}
-	
+
 	bool CalcCntrTop(uint16_t wFreq)
 	{
 		bool fRes=FALSE;
@@ -108,7 +109,7 @@ implementation {
 				fRet = TRUE;
 				break;
 			}
-			
+
 		}
 
 		return fRet;
@@ -173,9 +174,9 @@ implementation {
 	{
 		error_t ret = (0xFF == m_bMode || 100 < duty_cycle || g_channels < channel || MAX_CHANNELS < g_channels ? FAIL : SUCCESS);
 		uint8_t bCmpMode;
-		bool	fFullDC = ((100 == duty_cycle && !invert) || (0 == duty_cycle && invert));
-uint8_t bDBGWaySet = 0;
-		
+		bool    fFullDC = ((100 == duty_cycle && !invert) || (0 == duty_cycle && invert));
+		uint8_t bDBGWaySet = 0;
+
 		if(SUCCESS == ret)
 		{
 			if(100 == duty_cycle || 0 == duty_cycle)
@@ -187,7 +188,6 @@ uint8_t bDBGWaySet = 0;
 				bCmpMode = (TRUE != invert ? 2: 3);
 			}
 
-			call Pin.makeOutput[channel]();			
 			if(0 != bCmpMode)
 			{
 				//if(fZeroDC)
@@ -199,29 +199,30 @@ uint8_t bDBGWaySet = 0;
 				{
 					m_wCompare = (uint16_t)((float)m_wCntrTop / ((float)100 / (float)duty_cycle));
 				}
-				
+
 				call Counter.setMode((m_bTimerMode << 3) | m_rgwClockDividerRegValues[m_bClkDivNdx]);
 				SetCounterTop(m_wCntrTop); //Counter TOP (fgalling edge)
 
 				m_fIsChannelUsed[channel] = TRUE;
 				call Pin.set[channel]();
 				call Compare.set[channel](m_wCompare);
-bDBGWaySet |= 1;
+				bDBGWaySet |= 1;
 			}
 			else if(fFullDC)
 			{
 				//call Pin.makeInput[channel]();
 				m_fIsChannelUsed[channel] = FALSE;
 				call Pin.set[channel]();
-bDBGWaySet |= 2;
+				bDBGWaySet |= 2;
 			}
 			else
 			{
 				//call Pin.makeInput[channel]();
 				m_fIsChannelUsed[channel] = FALSE;
 				call Pin.clr[channel]();
-bDBGWaySet |= 4;
+				bDBGWaySet |= 4;
 			}
+			call Pin.makeOutput[channel]();
 
 			call Compare.setMode[channel](bCmpMode);
 
@@ -230,11 +231,11 @@ bDBGWaySet |= 4;
 			{
 				call Counter.setMode(0);
 				SetCounterTop(0);
-bDBGWaySet |= 8;
+				bDBGWaySet |= 8;
 			}
 		}
-//debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
-debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, o/p %d inv %d ws %d T %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, m_fIsChannelUsed[channel], invert, bDBGWaySet, g_channels);
+		//debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, inv %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, invert);
+		debug1("conf-d DivNdx %d, Top %d, Cmp %d, ch %d, dc %d, o/p %d inv %d ws %d T %d", m_bClkDivNdx, m_wCntrTop, m_wCompare, channel, duty_cycle, m_fIsChannelUsed[channel], invert, bDBGWaySet, g_channels);
 		return ret;
 	}
 
